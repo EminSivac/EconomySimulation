@@ -10,20 +10,22 @@ namespace EconomySimulation
         {
             //Firmen erzeugen
 
-            Firma firma1 = new Firma("HolzProdukt", 1000);
+            Firma firma1 = new Firma("HolzProdukt", 100000);
 
-            Firma firma2 = new Firma("HolzProdukt2", 1500);
+            Firma firma2 = new Firma("HolzProdukt2", 150000);
 
-            List<Firma> firmen = new List<Firma>() { firma1, firma2 };
+            Firma firma3 = new Firma("HolzProdukt3", 80000);
+
+            List<Firma> firmen = new List<Firma>() { firma1, firma2, firma3 };
 
             // 100 Personen mit Geld, Bedarf und PreisToleranz
             List<Mensch> personen = new();
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 personen.Add(new Mensch
                 {
-                    Geld = 100,
+                    Geld = 1000,
                     Bedarf = 1,
                     PreisToleranz = 0.5
                 });
@@ -54,7 +56,7 @@ namespace EconomySimulation
             AusgabeMarkt(markt);
 
             //Simulation
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 Console.WriteLine($"Runde {i + 1}");
 
@@ -68,7 +70,7 @@ namespace EconomySimulation
                 markt.updatePrice();
 
                 // 4. Firmen verkaufen zum neuen Preis
-                FirmenVerkaufen(firmen, markt);
+                FirmenVerkaufen(firmen, personen, markt);
 
                 // 5 Firmen zahlen Löhne
                 FirmenZahlenLoehne(firmen);
@@ -85,7 +87,10 @@ namespace EconomySimulation
             {
                 Console.WriteLine($"{firma.Name}: Kapital = {Math.Round(firma.Kapital, 2)}, Mitarbeiter = {firma.Mitarbeiter.Count}");
             }
-
+            foreach (var person in personen)
+            {
+                Console.WriteLine($"Person: Geld = {Math.Round(person.Geld, 2)}, Arbeitgeber = {(person.Arbeitgeber != null ? person.Arbeitgeber.Name : "Arbeitslos")}");
+            }
         }
 
         private static void AusgabeMarkt(Markt markt)
@@ -97,16 +102,46 @@ namespace EconomySimulation
                 $"\nNeuer Preis: {Math.Round(markt.Preis, 2)}\n");
         }
 
-        private static void FirmenVerkaufen(List<Firma> firmen, Markt markt)
+        private static void FirmenVerkaufen(
+            List<Firma> firmen,
+            List<Mensch> personen,
+            Markt markt)
         {
+            double restNachfrage = markt.Nachfrage;
+
             foreach (var firma in firmen)
             {
-                double einnahmen = firma.Produktion * markt.Preis;
-                double kosten = firma.Produktion * firma.Kosten;
+                if (restNachfrage <= 0)
+                    break;
 
-                firma.Kapital += einnahmen - kosten;
+                double verkaufbareMenge = firma.Produktion;
+
+                foreach (var kunde in personen)
+                {
+                    if (restNachfrage <= 0 || verkaufbareMenge <= 0)
+                        break;
+
+                    if (kunde.Geld <= 0)
+                        continue;
+
+                    double maxKauf = Math.Min(kunde.Bedarf, verkaufbareMenge);
+                    double kosten = maxKauf * markt.Preis;
+
+                    if (kosten > kunde.Geld)
+                    {
+                        maxKauf = kunde.Geld / markt.Preis;
+                        kosten = maxKauf * markt.Preis;
+                    }
+
+                    kunde.Geld -= kosten;
+                    firma.Kapital += kosten;
+
+                    verkaufbareMenge -= maxKauf;
+                    restNachfrage -= maxKauf;
+                }
             }
         }
+
 
         private static void FirmenReagieren(
             List<Firma> firmen,
@@ -157,13 +192,6 @@ namespace EconomySimulation
                 kaufFaktor = Math.Clamp(kaufFaktor, 0, 1);
 
                 double kaufMenge = p.Bedarf * kaufFaktor;
-
-                double kosten = kaufMenge * markt.Preis;
-
-                if (kosten > p.Geld)
-                    kaufMenge = p.Geld / markt.Preis;
-
-                p.Geld -= kaufMenge * markt.Preis;
 
                 return kaufMenge;
             });
