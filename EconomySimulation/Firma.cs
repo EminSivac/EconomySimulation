@@ -9,15 +9,20 @@ namespace EconomySimulation
 {
     public class Firma
     {
-        public string Name { get; set; }
+        public string Name;
 
-        public double Kapital { get; set; }
+        public double Kapital;
 
+        public double Produktion;
 
+        public double Kosten;
 
-        public Firma() 
-        { 
-        
+        public Firma(string name, double kapital, double produktion, double kosten)
+        {
+            Name = name;
+            Kapital = kapital;
+            Produktion = produktion;
+            Kosten = kosten;
         }
     }
 }
