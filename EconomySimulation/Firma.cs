@@ -13,16 +13,23 @@ namespace EconomySimulation
 
         public double Kapital;
 
-        public double Produktion;
+        public double Produktion => Mitarbeiter.Count * 0.5;
 
-        public double Kosten;
+        public double Kosten => Mitarbeiter.Count * 0.5;
 
-        public Firma(string name, double kapital, double produktion, double kosten)
+        public List<Mensch> Mitarbeiter = new();
+
+        public double LohnProMitarbeiter = 20;
+
+        public Firma(string name, double kapital)
         {
             Name = name;
             Kapital = kapital;
-            Produktion = produktion;
-            Kosten = kosten;
+        }
+
+        public double BerechneProduktion()
+        {
+            return Mitarbeiter.Count * 2;
         }
     }
 }
