@@ -13,7 +13,9 @@ namespace EconomySimulation
 
         public double Kapital;
 
-        public double Produktion => Mitarbeiter.Count * 0.5;
+        public double KapitalLetzterMonat;
+
+        public double Produktion => Mitarbeiter.Count * 2;
 
         public double Kosten => Mitarbeiter.Count * 0.5;
 

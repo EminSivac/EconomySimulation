@@ -1,36 +1,34 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.Intrinsics.X86;
+using System.Text.Json;
 
 namespace EconomySimulation
 {
     internal class Program
     {
+        static SimConfig _config = LadeConfig();
+
         static void Main(string[] args)
         {
             //Firmen erzeugen
-
-            Firma firma1 = new Firma("HolzProdukt", 100000);
-
-            Firma firma2 = new Firma("HolzProdukt2", 150000);
-
-            Firma firma3 = new Firma("HolzProdukt3", 80000);
-
-            List<Firma> firmen = new List<Firma>() { firma1, firma2, firma3 };
+            List<Firma> firmen = _config.Firmen.Select(f => new Firma(f.Name, f.StartKapital)).ToList();
 
             // 100 Personen mit Geld, Bedarf und PreisToleranz
             List<Mensch> personen = new();
 
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < _config.Personen.Anzahl; i++)
             {
                 personen.Add(new Mensch
                 {
-                    Geld = 1000,
-                    Bedarf = 1,
-                    PreisToleranz = 0.5
+                    Geld = _config.Personen.StartGeld,
+                    Bedarf = _config.Personen.Bedarf,
+                    PreisToleranz = _config.Personen.PreisToleranz
                 });
             }
 
+
+            // Menschen auf Firmen verteilen
             int firmaIndex = 0;
 
             foreach (var person in personen)
@@ -56,9 +54,14 @@ namespace EconomySimulation
             AusgabeMarkt(markt);
 
             //Simulation
-            for (int i = 0; i < 1000; i++)
+            Simulation(firmen, personen, markt, _config.Simulation.Runden);
+        }
+
+        private static void Simulation(List<Firma> firmen, List<Mensch> personen, Markt markt, int runden)
+        {
+            for (int i = 0; i < runden; i++)
             {
-                Console.WriteLine($"Runde {i + 1}");
+                Console.WriteLine($"Monat {i + 1}.");
 
                 // 1. Angebot aus Firmen
                 markt.Angebot = firmen.Sum(f => f.Produktion);
@@ -80,17 +83,6 @@ namespace EconomySimulation
 
                 AusgabeMarkt(markt);
             }
-
-            Console.WriteLine("Simulation beendet.");
-            Console.WriteLine("Endpreise der Firmen:");
-            foreach (var firma in firmen)
-            {
-                Console.WriteLine($"{firma.Name}: Kapital = {Math.Round(firma.Kapital, 2)}, Mitarbeiter = {firma.Mitarbeiter.Count}");
-            }
-            foreach (var person in personen)
-            {
-                Console.WriteLine($"Person: Geld = {Math.Round(person.Geld, 2)}, Arbeitgeber = {(person.Arbeitgeber != null ? person.Arbeitgeber.Name : "Arbeitslos")}");
-            }
         }
 
         private static void AusgabeMarkt(Markt markt)
@@ -102,10 +94,7 @@ namespace EconomySimulation
                 $"\nNeuer Preis: {Math.Round(markt.Preis, 2)}\n");
         }
 
-        private static void FirmenVerkaufen(
-            List<Firma> firmen,
-            List<Mensch> personen,
-            Markt markt)
+        private static void FirmenVerkaufen(List<Firma> firmen, List<Mensch> personen, Markt markt)
         {
             double restNachfrage = markt.Nachfrage;
 
@@ -142,11 +131,7 @@ namespace EconomySimulation
             }
         }
 
-
-        private static void FirmenReagieren(
-            List<Firma> firmen,
-            List<Mensch> personen,
-            Markt markt)
+        private static void FirmenReagieren(List<Firma> firmen, List<Mensch> personen, Markt markt)
         {
             foreach (var firma in firmen)
             {
@@ -177,8 +162,8 @@ namespace EconomySimulation
                     firma.Mitarbeiter.RemoveAt(firma.Mitarbeiter.Count - 1);
                 }
             }
-        }
 
+        }
 
         private static double MenschenReagieren(List<Mensch> personen, Markt markt)
         {
@@ -206,6 +191,28 @@ namespace EconomySimulation
                     mitarbeiter.Geld += firma.LohnProMitarbeiter;
                     firma.Kapital -= firma.LohnProMitarbeiter;
                 }
+            }
+        }
+
+        private static double GeldInUmlauf(List<Firma> firmen, List<Mensch> personen, Staat staat)
+        {
+            return personen.Sum(p => p.Geld)
+                 + firmen.Sum(f => f.Kapital)
+                 + staat.Budget; // kommt in Phase 2
+        }
+
+        private static SimConfig LadeConfig()
+        {
+            string projektPfad = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
+            string configPath = Path.Combine(projektPfad, "config.json");
+            string json = File.ReadAllText(configPath);
+            if (string.IsNullOrEmpty(json))
+            {
+                throw new Exception("Die Konfigurationsdatei ist leer oder konnte nicht gefunden werden.");
+            }
+            else
+            {
+                return JsonSerializer.Deserialize<SimConfig>(json);
             }
         }
     }

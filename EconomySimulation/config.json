@@ -1,0 +1,28 @@
+﻿{
+  "Simulation": {
+    "Runden": 100,
+    "ZufallsSeed": 42
+  },
+  "Personen": {
+    "Anzahl": 100,
+    "StartGeld": 100,
+    "Bedarf": 1,
+    "PreisToleranz": 0.5
+  },
+  "Firmen": [
+    { "Name": "HolzProdukt1", "StartKapital": 100000 },
+    { "Name": "HolzProdukt2", "StartKapital": 150000 },
+    { "Name": "HolzProdukt3", "StartKapital": 80000 }
+  ],
+  "Staat": {
+    "Einkommenssteuersatz": 0.20,
+    "Koerperschaftssteuersatz": 0.15,
+    "Mehrwertsteuersatz": 0.19,
+    "Sozialhilfe": 500,
+    "Schuldengrenze": 500000
+  },
+  "Markt": {
+    "Elastizitaet": 0.1,
+    "Marge": 1.3
+  }
+}
