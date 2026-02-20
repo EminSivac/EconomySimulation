@@ -1,6 +1,7 @@
 # EconomySimulation
 
-Ziel ist es, einer fiktiven Wirtschaft nahe zu kommen & dabei etwas zu lernen oder so.
+Ziel ist es, einer echten Wirtschaft nahe zu kommen & dabei etwas zu lernen oder so.
+Am Ende will ich "Gesetzesänderungen" einbringen und diese simulieren
 
 **Road Map**
 
