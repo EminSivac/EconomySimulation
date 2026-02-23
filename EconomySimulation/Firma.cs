@@ -23,7 +23,7 @@ namespace EconomySimulation
 
         public List<Mensch> Mitarbeiter = new();
 
-        public double LohnProMitarbeiter = 50;
+        public double LohnProMitarbeiter = 100;
         public int VerkaufteMenge = 0;
 
         public Firma(string name, double kapital)

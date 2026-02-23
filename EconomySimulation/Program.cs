@@ -89,11 +89,31 @@ namespace EconomySimulation
                 // 4. Preis anpassen
                 markt.updatePrice();
 
+                // 6. Firmen zahlen Löhne
+                FirmenZahlenLoehne(firmen);
+
                 // 5. Firmen verkaufen zum neuen Preis
                 FirmenVerkaufen(firmen, personen, markt, staat);//Es fehlt die MwSt.
 
-                // 6. Firmen zahlen Löhne
-                FirmenZahlenLoehne(firmen);
+                // Insolvenz prüfen
+                foreach (var firma in firmen.Where(f => f.Kapital < -f.Kosten * 2).ToList())
+                {
+                    Console.WriteLine($"💥 {firma.Name} ist insolvent!");
+
+                    if (firma.Kapital < 0)
+                    {
+                        staat.Budget += firma.Kapital; // Staat trägt Schulden
+                        firma.Kapital = 0;
+                    }
+
+                    foreach (var m in firma.Mitarbeiter)
+                    {
+                        m.Arbeitgeber = null;
+                        m.Lohn = 0;
+                    }
+
+                    firmen.Remove(firma);
+                }
 
                 // 7. Einkommenssteuer
                 staat.EinkommenVersteuern(personen);
@@ -104,12 +124,12 @@ namespace EconomySimulation
                 // 9. Sozialhilfen an Arbeitslose
                 staat.SozialhilfeAnArbeitslose(personen);
 
-                // 10. Firmen reagieren auf neue Marktlage (Einstellen/Feuern)
-                FirmenReagieren(firmen, personen, markt);
+                // 10. Firmen reagieren (Einstellen/Feuern)
+                FirmenReagieren(firmen, personen);
 
                 // 11. Augabe
                 AusgabeMarkt(markt);
-
+                //AusgabeFirmen(firmen);
             }
 
             Console.WriteLine($"Staatbudget:       {Math.Round(staat.Budget, 2)}");
@@ -117,6 +137,14 @@ namespace EconomySimulation
             Console.WriteLine($"Personengeld:      {Math.Round(personen.Sum(p => p.Geld), 2)}");
             Console.WriteLine($"─────────────────────────────");
             Console.WriteLine($"Geld in Umlauf:    {Math.Round(GeldInUmlauf(firmen, personen, staat), 2)}");
+            Console.WriteLine();
+            
+            personen.Select(p => p.Arbeitgeber != null ? p.Arbeitgeber.Name : "Arbeitslos").GroupBy(a => a).ToList().ForEach(g =>
+            {
+                Console.WriteLine($"{g.Key}: {g.Count()}");
+            });
+
+            //AusgabePersonen(personen);
         }
 
         private static void AusgabeMarkt(Markt markt)
@@ -128,6 +156,35 @@ namespace EconomySimulation
                 $"\nNeuer Preis: {Math.Round(markt.Preis, 2)}\n");
         }
 
+        private static void AusgabeFirmen(List<Firma> firmen)
+        {
+            firmen.ForEach(f =>
+            {
+                Console.WriteLine(
+                    $"Firma: {f.Name}" +
+                    $"\nKapital: {Math.Round(f.Kapital, 2)}" +
+                    $"\nProduktion: {Math.Round(f.Produktion, 2)}" +
+                    $"\nKosten: {Math.Round(f.Kosten, 2)}" +
+                    $"\nKosten/Einheit: {Math.Round(f.KostenProEinheit, 2)}" +
+                    $"\nMitarbeiter: {f.Mitarbeiter.Count}" +
+                    $"\nLohn/Mitarbeiter: {Math.Round(f.LohnProMitarbeiter, 2)}" +
+                    $"\nVerkaufte Menge: {f.VerkaufteMenge}\n");
+            });
+        }
+
+        private static void AusgabePersonen(List<Mensch> personen)
+        {
+            personen.ForEach(p =>
+            {
+                Console.WriteLine(
+                    $"Geld: {Math.Round(p.Geld, 2)}" +
+                    $"\nBedarf: {Math.Round(p.Bedarf, 2)}" +
+                    $"\nPreisToleranz: {Math.Round(p.PreisToleranz, 2)}" +
+                    $"\nArbeitgeber: {(p.Arbeitgeber != null ? p.Arbeitgeber.Name : "Arbeitslos")}" +
+                    $"\nLohn: {Math.Round(p.Lohn, 2)}\n");
+            });
+        }
+
         private static void FirmenVerkaufen(List<Firma> firmen,List<Mensch> personen,Markt markt,Staat staat)
         {
             foreach (var kunde in personen)
@@ -136,7 +193,9 @@ namespace EconomySimulation
 
                 double nochZuKaufen = kunde.Bedarf;
 
-                foreach (var firma in firmen.Where(f => f.Produktion > f.VerkaufteMenge))
+                var zufaelligeFirmen = firmen.Where(f => f.Produktion > f.VerkaufteMenge).OrderBy(_ => Random.Shared.Next()).ToList();
+
+                foreach (var firma in zufaelligeFirmen)
                 {
                     if (nochZuKaufen <= 0) break;
 
@@ -147,7 +206,7 @@ namespace EconomySimulation
                     // Kann sich der Kunde das leisten?
                     if (brutto > kunde.Geld)
                     {
-                        kaufMenge = kunde.Geld / markt.Preis;
+                        kaufMenge = Math.Floor(kunde.Geld / markt.Preis);
                         brutto = kaufMenge * markt.Preis;
                     }
 
@@ -164,18 +223,16 @@ namespace EconomySimulation
             }
         }
 
-        private static void FirmenReagieren(List<Firma> firmen, List<Mensch> personen, Markt markt)
+        private static void FirmenReagieren(List<Firma> firmen, List<Mensch> personen)
         {
             foreach (var firma in firmen)
             {
-                double marktLage = markt.Nachfrage - markt.Angebot;
+                // Nicht globale Marktlage – sondern eigene Verkaufsquote
+                double auslastung = firma.VerkaufteMenge / Math.Max(firma.Produktion, 1);
 
-                // EINSTELLEN
-                if (marktLage > 0)
+                if (auslastung >= 0.9) // 90% verkauft → einstellen
                 {
-                    var arbeitsloser = personen
-                        .FirstOrDefault(p => p.Arbeitgeber == null);
-
+                    var arbeitsloser = personen.FirstOrDefault(p => p.Arbeitgeber == null);
                     if (arbeitsloser != null)
                     {
                         arbeitsloser.Arbeitgeber = firma;
@@ -183,16 +240,15 @@ namespace EconomySimulation
                         firma.Mitarbeiter.Add(arbeitsloser);
                     }
                 }
-
-                // FEUERN
-                else if (marktLage < 0 && firma.Mitarbeiter.Count > 0)
+                else if (auslastung < 0.5) // unter 50% verkauft → feuern
                 {
-                    var mitarbeiter = firma.Mitarbeiter[^1];
-
-                    mitarbeiter.Arbeitgeber = null;
-                    mitarbeiter.Lohn = 0;
-
-                    firma.Mitarbeiter.RemoveAt(firma.Mitarbeiter.Count - 1);
+                    if (firma.Mitarbeiter.Count > 1)
+                    {
+                        var mitarbeiter = firma.Mitarbeiter[^1];
+                        mitarbeiter.Arbeitgeber = null;
+                        mitarbeiter.Lohn = 0;
+                        firma.Mitarbeiter.RemoveAt(firma.Mitarbeiter.Count - 1);
+                    }
                 }
             }
 
@@ -209,7 +265,8 @@ namespace EconomySimulation
 
                 kaufFaktor = Math.Clamp(kaufFaktor, 0, 1);
 
-                double kaufMenge = p.Bedarf * kaufFaktor;
+                double maximalKaufbar = p.Geld / markt.Preis;
+                double kaufMenge = Math.Min(p.Bedarf * kaufFaktor, maximalKaufbar);
 
                 return kaufMenge;
             });

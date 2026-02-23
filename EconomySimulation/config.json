@@ -1,12 +1,12 @@
 ﻿{
   "Simulation": {
-    "Runden": 100,
+    "Runden": 130,
     "ZufallsSeed": 42
   },
   "Personen": {
     "Anzahl": 100,
     "StartGeld": 500,
-    "Bedarf": 1,
+    "Bedarf": 0.7,
     "PreisToleranz": 0.5
   },
   "Firmen": [
