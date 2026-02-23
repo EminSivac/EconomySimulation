@@ -5,20 +5,20 @@
   },
   "Personen": {
     "Anzahl": 100,
-    "StartGeld": 100,
+    "StartGeld": 500,
     "Bedarf": 1,
     "PreisToleranz": 0.5
   },
   "Firmen": [
-    { "Name": "HolzProdukt1", "StartKapital": 100000 },
-    { "Name": "HolzProdukt2", "StartKapital": 150000 },
-    { "Name": "HolzProdukt3", "StartKapital": 80000 }
+    { "Name": "HolzProdukt1", "StartKapital": 10000 },
+    { "Name": "HolzProdukt2", "StartKapital": 15000 },
+    { "Name": "HolzProdukt3", "StartKapital": 8000 }
   ],
   "Staat": {
     "Einkommenssteuersatz": 0.20,
     "Koerperschaftssteuersatz": 0.15,
     "Mehrwertsteuersatz": 0.19,
-    "Sozialhilfe": 500,
+    "Sozialhilfe": 50,
     "Schuldengrenze": 500000
   },
   "Markt": {

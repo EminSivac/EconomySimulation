@@ -35,10 +35,10 @@ namespace EconomySimulation
             {
                 var firma = firmen[firmaIndex];
 
-                person.Arbeitgeber = firma;
+                person.Arbeitgeber = firma; //Arbeitgeber zuweisen
                 person.Lohn = firma.LohnProMitarbeiter;
 
-                firma.Mitarbeiter.Add(person);
+                firma.Mitarbeiter.Add(person); //Mitarbeiter hinzufügen
 
                 firmaIndex = (firmaIndex + 1) % firmen.Count;
             }
@@ -46,43 +46,77 @@ namespace EconomySimulation
             // Markt
             Markt markt = new Markt();
 
-            markt.BasisPreis = firmen.Average(f => f.Kosten) * 1.4;
+            markt.BasisPreis = UpdateBasisPreis(firmen, 1.4);
             markt.Preis = markt.BasisPreis;
             markt.Angebot = firmen.Sum(f => f.Produktion);
             markt.Nachfrage = MenschenReagieren(personen, markt);
 
             AusgabeMarkt(markt);
 
+
+            //Staat
+            Staat staat = new Staat();
+            staat.Einkommenssteuer = _config.Staat.Einkommenssteuersatz;
+            staat.Unternehmenssteuer = _config.Staat.Koerperschaftssteuersatz;
+            staat.Mehrwertsteuer = _config.Staat.Mehrwertsteuersatz;
+            staat.Sozialhilfe = _config.Staat.Sozialhilfe;
+
             //Simulation
-            Simulation(firmen, personen, markt, _config.Simulation.Runden);
+            Simulation(firmen, personen, markt, staat, _config.Simulation.Runden);
         }
 
-        private static void Simulation(List<Firma> firmen, List<Mensch> personen, Markt markt, int runden)
+        private static void Simulation(List<Firma> firmen, List<Mensch> personen, Markt markt , Staat staat, int runden)
         {
             for (int i = 0; i < runden; i++)
             {
                 Console.WriteLine($"Monat {i + 1}.");
 
-                // 1. Angebot aus Firmen
+                // Verkaufsmenge zurücksetzen
+                firmen.ForEach(f => f.VerkaufteMenge = 0);
+
+                // KapitalLetzterMonat aktualisieren
+                firmen.ForEach(f => f.KapitalLetzterMonat = f.Kapital);
+
+                // 1. Basispreis aktualisieren [Kosten * Marge]
+                markt.BasisPreis = UpdateBasisPreis(firmen, 1.4);
+
+                // 2. Angebot aus Firmen
                 markt.Angebot = firmen.Sum(f => f.Produktion);
 
-                // 2. Nachfrage aus Personen
+                // 3. Nachfrage aus Personen
                 markt.Nachfrage = MenschenReagieren(personen, markt);
 
-                // 3. Preis anpassen
+                // 4. Preis anpassen
                 markt.updatePrice();
 
-                // 4. Firmen verkaufen zum neuen Preis
-                FirmenVerkaufen(firmen, personen, markt);
+                // 5. Firmen verkaufen zum neuen Preis
+                FirmenVerkaufen(firmen, personen, markt, staat);//Es fehlt die MwSt.
 
-                // 5 Firmen zahlen Löhne
+                // 6. Firmen zahlen Löhne
                 FirmenZahlenLoehne(firmen);
 
-                // 6. Firmen reagieren
+                // 7. Einkommenssteuer
+                staat.EinkommenVersteuern(personen);
+
+                // 8. Körperschaftssteuer
+                staat.UnternehmensVersteuern(firmen);
+
+                // 9. Sozialhilfen an Arbeitslose
+                staat.SozialhilfeAnArbeitslose(personen);
+
+                // 10. Firmen reagieren auf neue Marktlage (Einstellen/Feuern)
                 FirmenReagieren(firmen, personen, markt);
 
+                // 11. Augabe
                 AusgabeMarkt(markt);
+
             }
+
+            Console.WriteLine($"Staatbudget:       {Math.Round(staat.Budget, 2)}");
+            Console.WriteLine($"Firmenkapital:     {Math.Round(firmen.Sum(f => f.Kapital), 2)}");
+            Console.WriteLine($"Personengeld:      {Math.Round(personen.Sum(p => p.Geld), 2)}");
+            Console.WriteLine($"─────────────────────────────");
+            Console.WriteLine($"Geld in Umlauf:    {Math.Round(GeldInUmlauf(firmen, personen, staat), 2)}");
         }
 
         private static void AusgabeMarkt(Markt markt)
@@ -94,39 +128,38 @@ namespace EconomySimulation
                 $"\nNeuer Preis: {Math.Round(markt.Preis, 2)}\n");
         }
 
-        private static void FirmenVerkaufen(List<Firma> firmen, List<Mensch> personen, Markt markt)
+        private static void FirmenVerkaufen(List<Firma> firmen,List<Mensch> personen,Markt markt,Staat staat)
         {
-            double restNachfrage = markt.Nachfrage;
-
-            foreach (var firma in firmen)
+            foreach (var kunde in personen)
             {
-                if (restNachfrage <= 0)
-                    break;
+                if (kunde.Geld <= 0) continue;
 
-                double verkaufbareMenge = firma.Produktion;
+                double nochZuKaufen = kunde.Bedarf;
 
-                foreach (var kunde in personen)
+                foreach (var firma in firmen.Where(f => f.Produktion > f.VerkaufteMenge))
                 {
-                    if (restNachfrage <= 0 || verkaufbareMenge <= 0)
-                        break;
+                    if (nochZuKaufen <= 0) break;
 
-                    if (kunde.Geld <= 0)
-                        continue;
+                    double verfuegbar = firma.Produktion - firma.VerkaufteMenge;
+                    double kaufMenge = Math.Min(nochZuKaufen, verfuegbar);
+                    double brutto = kaufMenge * markt.Preis;
 
-                    double maxKauf = Math.Min(kunde.Bedarf, verkaufbareMenge);
-                    double kosten = maxKauf * markt.Preis;
-
-                    if (kosten > kunde.Geld)
+                    // Kann sich der Kunde das leisten?
+                    if (brutto > kunde.Geld)
                     {
-                        maxKauf = kunde.Geld / markt.Preis;
-                        kosten = maxKauf * markt.Preis;
+                        kaufMenge = kunde.Geld / markt.Preis;
+                        brutto = kaufMenge * markt.Preis;
                     }
 
-                    kunde.Geld -= kosten;
-                    firma.Kapital += kosten;
+                    if (kaufMenge <= 0) continue;
 
-                    verkaufbareMenge -= maxKauf;
-                    restNachfrage -= maxKauf;
+                    // Geld aufteilen: MwSt an Staat, Rest an Firma
+                    double mwst = brutto * staat.Mehrwertsteuer;
+                    kunde.Geld -= brutto;
+                    firma.Kapital += brutto - mwst;
+                    staat.BudgetErhoehen(mwst);
+                    firma.VerkaufteMenge += (int)kaufMenge;
+                    nochZuKaufen -= kaufMenge;
                 }
             }
         }
@@ -199,6 +232,13 @@ namespace EconomySimulation
             return personen.Sum(p => p.Geld)
                  + firmen.Sum(f => f.Kapital)
                  + staat.Budget; // kommt in Phase 2
+        }
+
+        public static double UpdateBasisPreis(List<Firma> firmen, double marge)
+        {
+            var aktiveFirmen = firmen.Where(f => f.Produktion > 0).ToList();
+            if (aktiveFirmen.Count == 0) return double.MaxValue;
+            return aktiveFirmen.Average(f => f.KostenProEinheit) * marge;
         }
 
         private static SimConfig LadeConfig()

@@ -8,10 +8,12 @@ namespace EconomySimulation
 {
     public class Staat
     {
-        public double Budget { get; private set; }
-        public double Einkommenssteuer = 0.2; // 20% Einkommenssteuer
-        public double Unternehmenssteuer = 0.15; // 15% Unternehmenssteuer
-        public double Mehrwertsteuer = 0.19; // 19% Mehrwertsteuer
+        public double Budget { get; set; }
+        public double Einkommenssteuer { get; set; }
+        public double Unternehmenssteuer { get; set; }
+        public double Mehrwertsteuer { get; set; }
+
+        public double Sozialhilfe { get; set; }
 
         public void EinkommenVersteuern(List<Mensch> personen)
         {
@@ -28,17 +30,26 @@ namespace EconomySimulation
             foreach (var firma in firmen)
             {
                 double gewinn = firma.Kapital - firma.KapitalLetzterMonat;
+                if (gewinn <= 0) continue;
+
                 double steuer = gewinn * Unternehmenssteuer;
                 firma.Kapital -= steuer;
                 Budget += steuer;
             }
         }
 
-        public void MehrwertsteuerErheben(List<Mensch> personen, Markt markt)
+        public void BudgetErhoehen(double steuer)
         {
-                double umsatz = personen.Sum(p => p.Bedarf * markt.Preis);
-                double steuer = umsatz * Mehrwertsteuer;
-                Budget += steuer;
+            Budget += steuer;
+        }
+
+        public void SozialhilfeAnArbeitslose(List<Mensch> personen)
+        {
+            personen.Where(p => p.Arbeitgeber == null).ToList().ForEach(p =>
+            {
+                p.Geld += Sozialhilfe;
+                Budget -= Sozialhilfe;
+            });
         }
     }
 }
