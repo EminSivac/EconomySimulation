@@ -11,7 +11,7 @@
     "Beduerfnisse": {
       "Essen": 1.0,
       "Wohnen": 1.0,
-      "Mobilitaet": 0.5,
+      "Mobilitaet": 0.4,
       "Freizeit": 0.6,
       "Sozial": 0.4
     }
