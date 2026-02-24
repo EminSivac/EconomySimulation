@@ -15,6 +15,6 @@ namespace EconomySimulation
         public Firma? Arbeitgeber;
         public double Lohn;
 
-        public double sparQuote; // wie viel er von seinem Geld spart
-    }
+        public double sparQuote; // wie viel er von seinem Geld 
+}
 }

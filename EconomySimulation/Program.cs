@@ -78,7 +78,7 @@ namespace EconomySimulation
                 firmen.ForEach(f => f.KapitalLetzterMonat = f.Kapital);
 
                 // 1. Basispreis aktualisieren [Kosten * Marge]
-                markt.BasisPreis = UpdateBasisPreis(firmen, 1.4);
+                markt.BasisPreis = UpdateBasisPreis(firmen, _config.Markt.Marge);
 
                 // 2. Angebot aus Firmen
                 markt.Angebot = firmen.Sum(f => f.Produktion);
