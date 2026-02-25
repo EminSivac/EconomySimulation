@@ -9,12 +9,32 @@ namespace EconomySimulation
     public class Mensch
     {
         public double Geld;
-        public double Bedarf;        // wie viel er pro Tick will
-        public double PreisToleranz; // wie stark Preis ihn abschreckt
+
+        // alter Gesamtbedarf (kannst du behalten für Debug / Skalierung)
+        public double Bedarf;
+
+        public double PreisToleranz;
 
         public Firma? Arbeitgeber;
         public double Lohn;
 
-        public double sparQuote; // wie viel er von seinem Geld 
-}
+        public enum Beduerfnis
+        {
+            Essen,
+            Wohnen,
+            Mobilitaet,
+            Freizeit,
+            Sozial
+        }
+
+        public Dictionary<Beduerfnis, double> BedarfVektor = new();
+
+        public Dictionary<Beduerfnis, double> Erfuellt = new();
+
+        public void ResetBeduerfnisse()
+        {
+            foreach (var key in BedarfVektor.Keys.ToList())
+                Erfuellt[key] = 0;
+        }
+    }
 }

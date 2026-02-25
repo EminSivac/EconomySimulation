@@ -1,11 +1,11 @@
 ﻿{
   "Simulation": {
-    "Runden": 130,
+    "Runden": 1,
     "ZufallsSeed": 42
   },
   "Personen": {
     "Anzahl": 100,
-    "StartGeld": 500,
+    "StartGeld": 40,
     "Bedarf": 0.5,
     "PreisToleranz": 0.5,
     "Beduerfnisse": {
@@ -17,9 +17,9 @@
     }
   },
   "Firmen": [
-    { "Name": "HolzProdukt1", "StartKapital": 10000 },
-    { "Name": "HolzProdukt2", "StartKapital": 15000 },
-    { "Name": "HolzProdukt3", "StartKapital": 8000 }
+    { "Name": "Fischerei", "StartKapital": 15000 },
+    { "Name": "Landwirt", "StartKapital": 15000 },
+    { "Name": "Sägewerk", "StartKapital": 15000 }
   ],
   "Staat": {
     "Einkommenssteuersatz": 0.20,
@@ -31,5 +31,29 @@
   "Markt": {
     "Elastizitaet": 0.1,
     "Marge": 1.1
-  }
+  },
+  "Produkte": [
+    {
+      "Name": "Brot",
+      "Preis": 5.0,
+      "Nutzen": {
+        "Essen": 1.0,
+        "Wohnen": 0.0,
+        "Mobilitaet": 0.0,
+        "Freizeit": 0.0,
+        "Sozial": 0.0
+      }
+    },
+    {
+      "Name": "Miete",
+      "Preis": 50.0,
+      "Nutzen": {
+        "Essen": 0.0,
+        "Wohnen": 1.0,
+        "Mobilitaet": 0.0,
+        "Freizeit": 0.0,
+        "Sozial": 0.0
+      }
+    }
+  ]
 }

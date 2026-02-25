@@ -11,6 +11,14 @@ namespace EconomySimulation
 
         static void Main(string[] args)
         {
+            // Produkte erzeugen
+            List<Produkt> produkte = _config.Produkte.Select(p => new Produkt
+            {
+                Name = p.Name,
+                Preis = p.Preis,
+                Nutzen = p.Nutzen
+            }).ToList();
+
             //Firmen erzeugen
             List<Firma> firmen = _config.Firmen.Select(f => new Firma(f.Name, f.StartKapital)).ToList();
 
@@ -26,6 +34,16 @@ namespace EconomySimulation
                     PreisToleranz = _config.Personen.PreisToleranz
                 });
             }
+
+            var brot = new Produkt
+            {
+                Name = "Brot",
+                Preis = 3,
+                Nutzen = new()
+                {
+                    { Mensch.Beduerfnis.Essen, 0.4 }
+                }
+            };
 
 
             // Menschen auf Firmen verteilen
@@ -98,7 +116,7 @@ namespace EconomySimulation
                 // Insolvenz prüfen
                 foreach (var firma in firmen.Where(f => f.Kapital < -f.Kosten * 2).ToList())
                 {
-                    Console.WriteLine($"💥 {firma.Name} ist insolvent!");
+                    Console.WriteLine($"{firma.Name} ist insolvent!");
 
                     if (firma.Kapital < 0)
                     {
@@ -312,5 +330,6 @@ namespace EconomySimulation
                 return JsonSerializer.Deserialize<SimConfig>(json);
             }
         }
+
     }
 }

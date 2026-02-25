@@ -13,6 +13,8 @@ namespace EconomySimulation
         public List<FirmaConfig> Firmen { get; set; }
         public StaatConfig Staat { get; set; }
         public MarktConfig Markt { get; set; }
+
+        public List<ProduktConfig> Produkte { get; set; }
     }
 
     public class SimulationConfig
@@ -48,5 +50,12 @@ namespace EconomySimulation
     {
         public double Elastizitaet { get; set; }
         public double Marge { get; set; }
+    }
+
+    public class ProduktConfig
+    {
+        public string Name { get; set; }
+        public double Preis { get; set; }
+        public Dictionary<Mensch.Beduerfnis, double> Nutzen { get; set; }
     }
 }
