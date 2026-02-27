@@ -64,7 +64,7 @@ namespace EconomySimulation
             // Markt
             Markt markt = new Markt();
 
-            markt.BasisPreis = UpdateBasisPreis(firmen, 1.4);
+            markt.BasisPreis = UpdateBasisPreis(firmen, _config.Markt.Marge);
             markt.Preis = markt.BasisPreis;
             markt.Angebot = firmen.Sum(f => f.Produktion);
             markt.Nachfrage = MenschenReagieren(personen, markt);
@@ -132,6 +132,7 @@ namespace EconomySimulation
 
                     firmen.Remove(firma);
                 }
+                if (firmen.Count == 0) break;
 
                 // 7. Einkommenssteuer
                 staat.EinkommenVersteuern(personen);
