@@ -15,7 +15,9 @@ namespace EconomySimulation
 
         public double KapitalLetzterMonat;
 
-        public double Produktion => Mitarbeiter.Count * 1;
+        public double Produktivitaet => BerechneProduktion();
+
+        public double Produktion => Mitarbeiter.Count * Produktivitaet;
 
         public double Kosten => Mitarbeiter.Count * LohnProMitarbeiter;
 
@@ -34,7 +36,7 @@ namespace EconomySimulation
 
         public double BerechneProduktion()
         {
-            return Mitarbeiter.Count * 2;
+            return 1 + Random.Shared.NextDouble() * 0.1; // Basisproduktion + zufällige Schwankung
         }
     }
 }

@@ -1,12 +1,12 @@
 ﻿{
   "Simulation": {
-    "Runden": 100,
+    "Runden": 1000,
     "ZufallsSeed": 42
   },
   "Personen": {
     "Anzahl": 100,
-    "StartGeld": 40,
-    "Bedarf": 0.5,
+    "StartGeld": 100,
+    "Bedarf": 1.0,
     "PreisToleranz": 0.5,
     "Beduerfnisse": {
       "Essen": 1.0,
@@ -17,9 +17,9 @@
     }
   },
   "Firmen": [
-    { "Name": "Fischerei", "StartKapital": 15000 },
-    { "Name": "Landwirt", "StartKapital": 15000 },
-    { "Name": "Sägewerk", "StartKapital": 15000 }
+    { "Name": "Firma1", "StartKapital": 15000 },
+    { "Name": "Fimra2", "StartKapital": 15000 },
+    { "Name": "Firma3", "StartKapital": 15000 }
   ],
   "Staat": {
     "Einkommenssteuersatz": 0.20,
@@ -30,7 +30,7 @@
   },
   "Markt": {
     "Elastizitaet": 0.1,
-    "Marge": 1.0
+    "Marge": 1.4
   },
   "Produkte": [
     {
@@ -53,6 +53,28 @@
         "Mobilitaet": 0.0,
         "Freizeit": 0.0,
         "Sozial": 0.0
+      }
+    },
+    {
+      "Name": "Restaurant",
+      "Preis": 50.0,
+      "Nutzen": {
+        "Essen": 1.0,
+        "Wohnen": 0.0,
+        "Mobilitaet": 0.0,
+        "Freizeit": 0.5,
+        "Sozial": 0.5
+      }
+    },
+    {
+      "Name": "Auto",
+      "Preis": 80.0,
+      "Nutzen": {
+        "Essen": 0.0,
+        "Wohnen": 0.0,
+        "Mobilitaet": 0.7,
+        "Freizeit": 0.0,
+        "Sozial": 0.1
       }
     }
   ]
